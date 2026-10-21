@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant-TW"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>怡君重返職場・賈好嘉小遊戲（提案示範）</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Noto+Serif+TC:wght@900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="game.css">
+<script src="common.js"></script><script src="game.js"></script>
+</head><body><div id="app"></div>
+<script>
+G.name = '怡君重返職場'; G.kick = '給想重回職場的媽媽'; G.title = '怡君的重返職場計畫';
+G.color = '#6a3fb8'; G.soft = '#f1eafc';
+G.intro = { art: personSvg('yi', 'worry', 'think', 190),
+  text: '怡君38歲，兩個孩子上小學了，離開職場6年。<br>「我想回去上班，可是時間、能力都怕跟不上……」<br>陪怡君過4關，找到<b>重返職場的路</b>！' };
+G.levels = [
+ { kind: '選一選', title: '哪個班表最適合？', ask: '孩子8點上學、下午4點放學。選一個怡君接得到孩子的工作時段。',
+   why: '不一定要全職。部分工時或彈性的工作，一樣可以重回職場；就業中心可以幫你找時段合適的職缺。',
+   play: function (st, done, o) {
+     var J = [['09:00–15:00 門市助理', 1], ['14:00–22:00 餐廳外場', 0], ['輪班 每週換時段', 0]];
+     var g = h('div', 'col'); st.appendChild(g);
+     J.forEach(function (x) {
+       var c = h('div', 'chipx', '🕘 ' + x[0]); c.style.fontSize = '17px'; c.style.padding = '14px';
+       c.onclick = function () { if (x[1]) { c.classList.add('ok'); done(); } else { c.classList.add('bad'); c.style.opacity = .45; setTimeout(function () { c.classList.remove('bad'); }, 300); } };
+       g.appendChild(c);
+     });
+     st.appendChild(h('div', 'hint', '工作與時段為示意'));
+     if (o.mid) g.children[1].onclick();
+     if (o.done) g.children[0].onclick();
+   } },
+ { kind: '翻一翻', title: '家裡練出來的本事', ask: '把左邊的「家事」翻過來，看看它是哪一種職場能力。',
+   why: '照顧家人的那幾年不是空白。安排行程、管家裡的帳、跟老師和長輩溝通，都是職場用得到的能力。',
+   play: function (st, done, o) {
+     var P = [['安排全家行程', '時間管理'], ['管家裡的帳', '細心理財'], ['跟老師、長輩溝通', '溝通協調'], ['同時顧兩個孩子', '多工處理']], n = 0;
+     var g = h('div', 'pair'); g.style.gridTemplateColumns = '1fr 1fr'; st.appendChild(g);
+     P.forEach(function (x) {
+       var t = h('div', 'tile back', '<div style="font-size:16px">' + x[0] + '</div>'); t.style.minHeight = '84px';
+       t.onclick = function () { if (!t.classList.contains('back')) return; t.classList.remove('back'); t.classList.add('ok'); t.innerHTML = '<div style="font-size:13px;color:#8a8170">' + x[0] + '</div><div style="font-size:19px">→ ' + x[1] + '</div>'; n++; if (n === 4) done(); };
+       g.appendChild(t);
+     });
+     var k = o.done ? 4 : o.mid ? 2 : 0;
+     for (var i = 0; i < k; i++) g.children[i].onclick();
+   } },
+ { kind: '算一算', title: '回去上班，還有獎勵', ask: '選全時或部分工時，再拉滑桿：做了幾個月？',
+   why: '<b>婦女再就業計畫</b>：離開職場滿180天，到就業中心求職登記後重返職場，在同一個雇主每滿30天，全時每月1萬元、部分工時每月5千元，最多6個月。（以分署最新公告為準）',
+   play: function (st, done, o) {
+     st.innerHTML = '<div class="pair" id="mode"><div class="chipx sel" data-v="10000">全時工作</div><div class="chipx" data-v="5000">部分工時</div></div>' +
+       '<div class="big" id="sum" style="margin-top:14px">0元</div><div class="hint" id="mo">做了 0 個月</div>' +
+       '<div class="meter"><i id="m" style="width:0;background:#8a5bd6"></i></div><input type="range" min="0" max="6" value="0" id="rg">';
+     var per = 10000, v = 0, fired = false;
+     function upd() { $('#sum').textContent = (per * v).toLocaleString() + '元'; $('#mo').textContent = '做了 ' + v + ' 個月'; $('#m').style.width = (v / 6 * 100) + '%'; if (v >= 3 && !fired) { fired = true; done(); } }
+     [].forEach.call($('#mode').children, function (c) { c.onclick = function () { [].forEach.call($('#mode').children, function (e) { e.classList.remove('sel'); }); c.classList.add('sel'); per = +c.dataset.v; upd(); }; });
+     $('#rg').oninput = function () { v = +this.value; upd(); };
+     if (o.mid) { $('#mode').children[1].onclick(); v = 2; $('#rg').value = 2; upd(); }
+     if (o.done) { v = 6; $('#rg').value = 6; upd(); }
+   } },
+ { kind: '打一通', title: '撥給就業服務專線', ask: '點電話3下：撥號、接通、預約。',
+   why: '打免付費專線 <b>0800-777-888</b>，或直接到就業中心辦理求職登記，就業服務員會陪你找工作、了解獎勵怎麼申請。',
+   play: function (st, done, o) {
+     var steps = ['撥號中…', '接通了！', '已預約諮詢 ✓'], n = 0;
+     st.innerHTML = '<div style="display:flex;justify-content:center;align-items:flex-end;gap:10px">' + personSvg('yi', 'smile', 'hold', 110) +
+       '<div style="text-align:center"><div id="ph" style="width:150px;height:150px;border-radius:50%;background:#8a5bd6;color:#fff;font-size:64px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 0 10px #e6dafa">📞</div><div style="font-weight:900;font-size:22px;margin-top:12px">0800-777-888</div><div id="stt" class="hint">點一下撥號</div></div></div>';
+     $('#ph').onclick = function () { if (n >= 3) return; $('#stt').textContent = steps[n]; n++; if (n === 3) { $('#ph').style.background = '#4caf6e'; done(); } };
+     var k = o.done ? 3 : o.mid ? 1 : 0;
+     for (var i = 0; i < k; i++) $('#ph').onclick();
+   } }
+];
+G.end = { title: '怡君重返職場了！', art: personSvg('yi', 'happy', 'up', 180),
+  text: '怡君學到：<br>① 部分工時也可以回職場<br>② 照顧家人的經驗是能力<br>③ 婦女再就業，每月最高1萬元獎勵',
+  cta: '找最近的就業中心 ›', note: '提案示範遊戲・資料以勞動力發展署雲嘉南分署公告為準・不蒐集任何個人資料' };
+startGame();
+</script><div style="position:fixed;left:0;right:0;bottom:0;z-index:99;text-align:center;font:500 11px/1.6 'Noto Sans TC',sans-serif;color:#fff;background:rgba(31,42,48,.72);padding:2px 6px;pointer-events:none">三角影像提案示範・非分署官方網站</div></body></html>

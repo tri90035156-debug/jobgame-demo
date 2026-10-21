@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-Hant-TW"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>技能背包大冒險・賈好嘉小遊戲（提案示範）</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Noto+Serif+TC:wght@900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="game.css">
+<script src="common.js"></script><script src="game.js"></script>
+</head><body><div id="app"></div>
+<script>
+G.name = '技能背包大冒險'; G.kick = '給第一次找工作的你'; G.title = '小安的技能背包';
+G.color = '#d9480f'; G.soft = '#fff2d9';
+G.intro = { art: personSvg('an', 'worry', 'think', 190) + icon('bag', 110),
+  text: '小安今年23歲，剛畢業。<br>「我讀的科系好像用不到，想學一技之長，可是學費好貴……」<br>陪小安過4關，把<b>技能背包</b>裝滿！' };
+var picked = [];
+var LIKES = [['palette', '畫畫'], ['wrench', '修東西'], ['heart', '照顧人'], ['laptop', '玩電腦'], ['pot', '做料理'], ['box', '整理東西']];
+var COURSE = { '畫畫': '設計班', '修東西': '機電班', '照顧人': '照顧服務員班', '玩電腦': 'AI應用班', '做料理': '餐飲班', '整理東西': '倉儲物流班' };
+G.levels = [
+ { kind: '點一點', title: '你喜歡做什麼？', ask: '選出3件你喜歡做的事。',
+   why: '從喜歡做的事出發，比較學得久。分署的職訓有設計、機電、照顧、AI、餐飲、物流等不同課程。',
+   play: function (st, done, o) {
+     picked = [];
+     var g = h('div', 'tiles'); st.appendChild(g);
+     var hint = h('div', 'hint', '已選 0 / 3'); st.appendChild(hint);
+     LIKES.forEach(function (x) {
+       var t = h('div', 'tile', icon(x[0], 64) + '<div>' + x[1] + '</div>');
+       t.onclick = function () {
+         if (picked.length >= 3 || t.classList.contains('on')) return;
+         t.classList.add('on'); picked.push(x[1]); hint.textContent = '已選 ' + picked.length + ' / 3';
+         if (picked.length === 3) done();
+       };
+       g.appendChild(t);
+     });
+     var auto = o.done ? [0, 1, 3] : o.mid ? [0, 3] : [];
+     auto.forEach(function (k) { g.children[k].onclick(); });
+   } },
+ { kind: '配一配', title: '幫興趣找到課程', ask: '先點左邊的興趣，再點右邊對應的課程。',
+   why: '產業新尖兵和職前訓練開了很多班，找課程時可以先用「我喜歡做什麼」來篩選。',
+   play: function (st, done, o) {
+     if (picked.length < 3) picked = ['畫畫', '修東西', '玩電腦'];
+     var p = h('div', 'pair'); st.appendChild(p);
+     var L = h('div', 'col'), R = h('div', 'col'); p.appendChild(L); p.appendChild(R);
+     var sel = null, ok = 0;
+     var courses = picked.map(function (x) { return COURSE[x]; }).concat(['餐飲班', '照顧服務員班']).filter(function (v, i, a) { return a.indexOf(v) === i; }).slice(0, 5);
+     courses.sort();
+     picked.forEach(function (x) {
+       var ic = LIKES.filter(function (y) { return y[1] === x; })[0][0];
+       var c = h('div', 'chipx', icon(ic, 34) + x); c.dataset.k = x;
+       c.onclick = function () { if (c.classList.contains('ok')) return; [].forEach.call(L.children, function (e) { e.classList.remove('sel'); }); c.classList.add('sel'); sel = c; };
+       L.appendChild(c);
+     });
+     courses.forEach(function (x) {
+       var c = h('div', 'chipx', '📘 ' + x);
+       c.onclick = function () {
+         if (!sel || c.classList.contains('ok')) return;
+         if (COURSE[sel.dataset.k] === x) { c.classList.add('ok'); sel.classList.remove('sel'); sel.classList.add('ok'); sel = null; ok++; if (ok === picked.length) done(); }
+         else { c.classList.add('bad'); setTimeout(function () { c.classList.remove('bad'); }, 300); }
+       };
+       R.appendChild(c);
+     });
+     st.appendChild(h('div', 'hint', '課程名稱為示意'));
+     var n = o.done ? picked.length : o.mid ? 1 : 0;
+     for (var k = 0; k < n; k++) { L.children[k].onclick(); [].filter.call(R.children, function (e) { return e.textContent.indexOf(COURSE[picked[k]]) >= 0; })[0].onclick(); }
+     if (o.mid) L.children[1].onclick();
+   } },
+ { kind: '拉一拉', title: '學費，有人幫你出', ask: '拉動滑桿：上課幾個月？看看補助怎麼加起來。',
+   why: '產業新尖兵：15到29歲青年，<b>訓練費最高補助10萬元</b>；失業青年上指定課程，<b>每月還有最高8,000元</b>學習獎勵金。（以分署最新公告為準）',
+   play: function (st, done, o) {
+     st.innerHTML = '<div style="font-weight:900">訓練費補助（最高）</div><div class="meter"><i style="width:100%;background:#f0a32c"></i></div><div style="text-align:right;font-weight:900">10萬元</div>' +
+       '<div style="font-weight:900;margin-top:8px">學習獎勵金（每月最高8,000元）</div><div class="meter"><i id="m2" style="width:0;background:#d9534f"></i></div>' +
+       '<div class="big" id="sum">0元</div><div class="hint" id="mo">上課 0 個月</div><input type="range" min="0" max="12" value="0" id="rg">';
+     var fired = false;
+     function upd(v) { $('#m2').style.width = (v / 12 * 100) + '%'; $('#sum').textContent = (v * 8000).toLocaleString() + '元'; $('#mo').textContent = '上課 ' + v + ' 個月'; if (v >= 3 && !fired) { fired = true; done(); } }
+     $('#rg').oninput = function () { upd(+this.value); };
+     if (o.done) { $('#rg').value = 6; upd(6); } else if (o.mid) { $('#rg').value = 2; upd(2); }
+   } },
+ { kind: '按一按', title: '蓋下報名章', ask: '按住印章1秒，完成報名！',
+   why: '報名後經過甄選就能開訓。小安的技能背包裝滿了，下一步：看看雲嘉南開了哪些班！',
+   play: function (st, done, o) {
+     st.innerHTML = '<div style="display:flex;justify-content:center;align-items:flex-end;gap:6px">' + personSvg('an', 'smile', 'hold', 120) + '<div id="bag">' + icon('bag', 100) + '</div></div><div class="press" id="pr">報名</div>';
+     var pr = $('#pr'), t;
+     function ok() { pr.classList.add('on'); pr.textContent = '已報名'; $('#bag').innerHTML = icon('bag', 100) + '<div style="display:flex;gap:2px">' + icon('palette', 40) + icon('wrench', 40) + icon('laptop', 40) + '</div>'; done(); }
+     pr.onpointerdown = function () { t = setTimeout(ok, 900); };
+     pr.onpointerup = pr.onpointerleave = function () { clearTimeout(t); };
+     if (o.done) ok();
+   } }
+];
+G.end = { title: '技能背包裝滿了！', art: personSvg('an', 'happy', 'up', 170) + icon('bag', 100),
+  text: '小安學到：<br>① 從喜歡的事找課程<br>② 15–29歲訓練費最高補助10萬<br>③ 失業青年上課每月還有獎勵金',
+  cta: '看雲嘉南開了哪些班 ›', note: '提案示範遊戲・資料以勞動力發展署雲嘉南分署公告為準・不蒐集任何個人資料' };
+startGame();
+</script><div style="position:fixed;left:0;right:0;bottom:0;z-index:99;text-align:center;font:500 11px/1.6 'Noto Sans TC',sans-serif;color:#fff;background:rgba(31,42,48,.72);padding:2px 6px;pointer-events:none">三角影像提案示範・非分署官方網站</div></body></html>

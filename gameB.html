@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant-TW"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>明叔再出發・賈好嘉小遊戲（提案示範）</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Noto+Serif+TC:wght@900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="game.css">
+<script src="common.js"></script><script src="game.js"></script>
+</head><body><div id="app"></div>
+<script>
+G.name = '明叔再出發'; G.kick = '給想重回職場的你'; G.title = '明叔的再出發路線';
+G.color = '#0f6670'; G.soft = '#e3f2f3';
+G.intro = { art: personSvg('ming', 'worry', 'think', 190),
+  text: '明叔56歲，住在新營，離開工廠半年了。<br>「我這個年紀，還有人要嗎？」<br>陪明叔過4關，找到<b>再出發的路</b>！' };
+G.levels = [
+ { kind: '翻一翻', title: '你的強項是什麼？', ask: '把6張卡片都翻開，看看明叔的工作強項。',
+   why: '幾十年累積的能力，都是強項。寫進履歷、面談時說出來，經驗就是你的超能力。',
+   play: function (st, done, o) {
+     var S = ['準時', '細心', '會帶人', '修機器', '懂客戶', '耐得住'], n = 0;
+     var g = h('div', 'tiles'); st.appendChild(g);
+     var hint = h('div', 'hint', '已翻開 0 / 6'); st.appendChild(hint);
+     S.forEach(function (x) {
+       var t = h('div', 'tile back', '?');
+       t.onclick = function () { if (!t.classList.contains('back')) return; t.classList.remove('back'); t.classList.add('ok'); t.innerHTML = icon('check', 44) + '<div style="font-size:18px">' + x + '</div>'; n++; hint.textContent = '已翻開 ' + n + ' / 6'; if (n === 6) done(); };
+       g.appendChild(t);
+     });
+     var k = o.done ? 6 : o.mid ? 3 : 0;
+     for (var i = 0; i < k; i++) g.children[i].onclick();
+   } },
+ { kind: '找一找', title: '最近的就業中心在哪？', ask: '明叔住在新營，點一下離他最近的就業中心。',
+   why: '雲嘉南有好幾個就業中心，就業服務員會依你的經驗和需求，幫你找職缺、推介面試。',
+   play: function (st, done, o) {
+     var m = h('div', 'map'); st.appendChild(m);
+     m.innerHTML = '<svg viewBox="0 0 320 300" width="100%" height="100%" style="position:absolute;inset:0"><path d="M120 10 L300 20 L290 95 L110 100 Z" fill="#f7f0de" stroke="#cdbb92" stroke-width="2"/><path d="M110 100 L290 95 L280 170 L100 175 Z" fill="#efe6cf" stroke="#cdbb92" stroke-width="2"/><path d="M100 175 L280 170 L270 290 L80 290 Z" fill="#f7f0de" stroke="#cdbb92" stroke-width="2"/><text x="250" y="55" font-size="15" font-weight="900" fill="#a08c5c">雲林</text><text x="240" y="135" font-size="15" font-weight="900" fill="#a08c5c">嘉義</text><text x="230" y="240" font-size="15" font-weight="900" fill="#a08c5c">臺南</text></svg>';
+     var P = [['斗六', 200, 55], ['虎尾', 150, 70], ['嘉義', 200, 140], ['朴子', 140, 150], ['新營', 165, 205], ['永康', 175, 268], ['台南', 125, 272]];
+     P.forEach(function (x) {
+       var p = h('div', 'pinx', '<div class="dot"></div><span>' + x[0] + '</span>'); p.style.left = (x[1] / 320 * 100) + '%'; p.style.top = (x[2] / 300 * 100) + '%';
+       p.onclick = function () { if (x[0] === '新營') { p.classList.add('ok'); done(); } else { p.style.opacity = .35; } };
+       m.appendChild(p);
+     });
+     st.appendChild(h('div', 'hint', '位置為示意，非實際地圖'));
+     if (o.mid) m.children[1 + 1].style.opacity = .35;
+     if (o.done) m.children[1 + 4].onclick();
+   } },
+ { kind: '選一選', title: '去就業中心要帶什麼？', ask: '選出3樣該帶的東西。',
+   why: '帶著身分證和履歷，再想想自己想做什麼工作。就業服務員會幫你媒合職缺，推介你去面試。',
+   play: function (st, done, o) {
+     var I = [['id', '身分證', 1], ['game', '遊戲機', 0], ['doc', '履歷', 1], ['swim', '泳衣', 0], ['diploma', '想做的工作清單', 1], ['gift', '伴手禮', 0]], ok = 0;
+     var g = h('div', 'tiles'); st.appendChild(g);
+     var hint = h('div', 'hint', '選對 0 / 3'); st.appendChild(hint);
+     I.forEach(function (x) {
+       var t = h('div', 'tile', icon(x[0], 60) + '<div>' + x[1] + '</div>');
+       t.onclick = function () { if (t.classList.contains('ok')) return; if (x[2]) { t.classList.add('ok'); ok++; hint.textContent = '選對 ' + ok + ' / 3'; if (ok === 3) done(); } else { t.classList.add('bad'); setTimeout(function () { t.classList.remove('bad'); }, 300); } };
+       g.appendChild(t);
+     });
+     var k = o.done ? [0, 2, 4] : o.mid ? [0] : [];
+     k.forEach(function (i) { g.children[i].onclick(); });
+   } },
+ { kind: '翻日曆', title: '上班滿30天', ask: '明叔找到工作了！點日曆，翻到第30天。',
+   why: '55歲以上（或45歲以上已退休）、離開職場3個月以上，經就業中心推介就業滿30天，就能申請<b>五五就業促進</b>：全時工作每月1萬元，最多6個月。（以分署最新公告為準）',
+   play: function (st, done, o) {
+     st.innerHTML = '<div style="display:flex;justify-content:center;align-items:flex-end;gap:8px">' + personSvg('ming', 'smile', 'down', 110) + '<div class="cal" id="cal"><div class="hd">上班第幾天</div><div class="d" id="dd">1</div><div class="s">點一下翻6天</div></div></div><div id="coins" style="text-align:center;min-height:60px"></div>';
+     var d = 1;
+     $('#cal').onclick = function () { if (d >= 30) return; d = Math.min(30, d + 6 - (d === 1 ? 1 : 0)); $('#dd').textContent = d; if (d >= 30) { $('#coins').innerHTML = icon('coin', 56) + icon('coin', 56) + icon('coin', 56) + '<div style="font-weight:900;color:#0f6670">符合申請資格！</div>'; done(); } };
+     var k = o.done ? 6 : o.mid ? 3 : 0;
+     for (var i = 0; i < k; i++) $('#cal').onclick();
+   } }
+];
+G.end = { title: '明叔再出發了！', art: personSvg('ming', 'happy', 'up', 180),
+  text: '明叔學到：<br>① 經驗就是強項<br>② 先去就業中心聊聊<br>③ 55歲以上重回職場，政府有獎勵',
+  cta: '找最近的就業中心 ›', note: '提案示範遊戲・就業中心位置為示意・資料以勞動力發展署雲嘉南分署公告為準・不蒐集任何個人資料' };
+startGame();
+</script><div style="position:fixed;left:0;right:0;bottom:0;z-index:99;text-align:center;font:500 11px/1.6 'Noto Sans TC',sans-serif;color:#fff;background:rgba(31,42,48,.72);padding:2px 6px;pointer-events:none">三角影像提案示範・非分署官方網站</div></body></html>
